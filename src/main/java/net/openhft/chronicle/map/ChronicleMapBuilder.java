@@ -214,6 +214,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean replicated;
     private boolean persisted;
     private String replicatedMapClassName = ReplicatedChronicleMap.class.getName();
+    private boolean closeManually = false;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
@@ -641,6 +642,14 @@ public final class ChronicleMapBuilder<K, V> implements
         this.sampleValue = sampleValue;
         averageValue = null;
         averageValueSize = UNDEFINED_DOUBLE_CONFIG;
+        return this;
+    }
+
+    /**
+     * TBD
+     */
+    public ChronicleMapBuilder<K, V> closeManually() {
+        this.closeManually = true;
         return this;
     }
 
@@ -1618,7 +1627,9 @@ public final class ChronicleMapBuilder<K, V> implements
         map.registerCleaner();
         // Ensure safe publication of the ChronicleMap
         OS.memory().storeFence();
-        map.addToOnExitHook();
+        if (!closeManually) {
+            map.addToOnExitHook();
+        }
     }
 
     /**
